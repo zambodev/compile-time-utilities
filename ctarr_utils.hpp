@@ -1,6 +1,4 @@
-using Type = int;
-
-template <Type... Is>
+template <typename Type, Type... Is>
 struct ctarray;
 
 namespace Private
@@ -9,14 +7,14 @@ namespace Private
     template <typename Array, unsigned long Index>
     struct get;
 
-    template <Type I0, Type... Is, unsigned long Index>
-    struct get<ctarray<I0, Is...>, Index>
+    template <typename Type, Type I0, Type... Is, unsigned long Index>
+    struct get<ctarray<Type, I0, Is...>, Index>
     {
-        static constexpr Type value = get<ctarray<Is...>, Index - 1>::value;
+        static constexpr Type value = get<ctarray<Type, Is...>, Index - 1>::value;
     };
 
-    template <Type I0, Type... Is>
-    struct get<ctarray<I0, Is...>, 0>
+    template <typename Type, Type I0, Type... Is>
+    struct get<ctarray<Type, I0, Is...>, 0>
     {
         static constexpr Type value = I0;
     };
@@ -25,35 +23,135 @@ namespace Private
     template <typename Array1, typename Array2>
     struct compare;
 
-    template <Type I0, Type... Is, Type J0, Type... Js>
-    struct compare<ctarray<I0, Is...>, ctarray<J0, Js...>>
+    template <typename Type, Type I0, Type... Is, Type J0, Type... Js>
+    struct compare<ctarray<Type, I0, Is...>, ctarray<Type, J0, Js...>>
     {
         static constexpr bool value = (I0 == J0
-                                       ? compare<ctarray<Is...>, ctarray<Js...>>::value
+                                       ? compare<ctarray<Type, Is...>, ctarray<Type, Js...>>::value
                                        : false);
     };
 
-    template <Type... Is>
-    struct compare<ctarray<Is...>, ctarray<>>
+    template <typename Type, Type... Is>
+    struct compare<ctarray<Type, Is...>, ctarray<Type>>
     {
         static constexpr bool value = false;
     };
 
-    template <Type... Js>
-    struct compare<ctarray<>, ctarray<Js...>>
+    template <typename Type, Type... Js>
+    struct compare<ctarray<Type>, ctarray<Type, Js...>>
     {
         static constexpr bool value = false;
     };
 
-    template <>
-    struct compare<ctarray<>, ctarray<>>
+    template <typename Type>
+    struct compare<ctarray<Type>, ctarray<Type>>
     {
         static constexpr bool value = true;
+    };
+
+    // Drop item --------------------------------------------------------------------------------------
+    template <typename Array, unsigned long Count>
+    struct drop;
+
+    template <typename Type, Type I0, Type... Is, unsigned long Count>
+    struct drop<ctarray<Type, I0, Is...>, Count>
+    {
+        using type = typename drop<ctarray<Type, Is...>, Count - 1>::type;
+    };
+
+    template <typename Type, Type I0, Type... Is>
+    struct drop<ctarray<Type, I0, Is...>, 0>
+    {
+        using type = ctarray<Type, I0, Is...>;
+    };
+
+    template <typename Type>
+    struct drop<ctarray<Type>, 0>
+    {
+        using type = ctarray<Type>;
+    };
+
+    // Prepend item -----------------------------------------------------------------------------------
+    template <typename Type, Type I0, typename Array>
+    struct prepend;
+
+    template <typename Type, Type I0, Type... Is>
+    struct prepend<Type, I0, ctarray<Type, Is...>>
+    {
+        using type = ctarray<Type, I0, Is...>;
+    };
+
+    template <typename Type, Type I0>
+    struct prepend<Type, I0, ctarray<Type>>
+    {
+        using type = ctarray<Type, I0>;
+    };
+
+    // Take item --------------------------------------------------------------------------------------
+    template <typename Array, unsigned long Count>
+    struct take;
+
+    template <typename Type, Type I0, Type... Is, unsigned long Count>
+    struct take<ctarray<Type, I0, Is...>, Count>
+    {
+        using type = typename prepend<Type, I0, typename take<ctarray<Type, Is...>, Count - 1>::type>::type;
+    };
+
+    template <typename Type, Type I0, Type... Is>
+    struct take<ctarray<Type, I0, Is...>, 0>
+    {
+        using type = ctarray<Type>;
+    };
+
+    template <typename Type>
+    struct take<ctarray<Type>, 0>
+    {
+        using type = ctarray<Type>;
+    };
+
+    // Search item ------------------------------------------------------------------------------------
+    template <typename Type, typename Array, Type S>
+    struct search;
+
+    template <typename Type, Type... Ls, Type S>
+    struct search<Type, ctarray<Type, Ls...>, S>
+    {
+        static constexpr unsigned long length = sizeof...(Ls);
+        static constexpr unsigned long m0 = get<ctarray<Type, Ls...>, length / 2>::value;
+        static constexpr unsigned long value = (S == m0
+                                                ? sizeof...(Ls)
+                                                : (S < m0
+                                                ? search<Type, typename take<ctarray<Type, Ls...>, length / 2>::type, S>::value
+                                                : search<Type, typename drop<ctarray<Type, Ls...>, length / 2>::type, S>::value));
+    };
+
+    template <typename Type, Type I0, Type S>
+    struct search<Type, ctarray<Type, I0>, S>
+    {
+        static constexpr unsigned long value = 0;
+    };
+
+    template <typename Type, Type S>
+    struct search<Type, ctarray<Type>, S>
+    {
+        static constexpr unsigned long value = 0;
     };
 }
 
 template <typename Array, unsigned long Index>
-constexpr inline Type ctarray_get_v = Private::get<Array, Index>::value;
+constexpr inline auto ctarray_get_v = Private::get<Array, Index>::value;
 
-template<typename Array1, typename Array2>
+template <typename Array1, typename Array2>
 constexpr inline bool ctarray_cmp_v = Private::compare<Array1, Array2>::value;
+
+template <typename Array, unsigned long Count>
+using ctarray_drop_t = Private::drop<Array, Count>::type;
+
+template <typename Array, unsigned long Count>
+using ctarray_take_t = Private::take<Array, Count>::type;
+
+template <typename Type, Type Item, typename Array>
+using ctarray_prepend_t = Private::prepend<Type, Item, Array>::type;
+
+template <typename Type, typename Array, Type Item>
+constexpr inline auto ctarray_search_v = Private::search<Type, Array, Item>::value;
