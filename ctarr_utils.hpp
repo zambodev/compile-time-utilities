@@ -1,3 +1,7 @@
+#pragma once
+
+#include <type_traits>
+
 template <typename Type, Type... Is>
 struct ctarray;
 
@@ -49,7 +53,7 @@ namespace Private
         static constexpr bool value = true;
     };
 
-    // Drop item --------------------------------------------------------------------------------------
+    // Drop item ----------------------------------------------------------------------------------
     template <typename Array, unsigned long Count>
     struct drop;
 
@@ -71,7 +75,7 @@ namespace Private
         using type = ctarray<Type>;
     };
 
-    // Prepend item -----------------------------------------------------------------------------------
+    // Prepend item -------------------------------------------------------------------------------
     template <typename Type, Type I0, typename Array>
     struct prepend;
 
@@ -87,7 +91,7 @@ namespace Private
         using type = ctarray<Type, I0>;
     };
 
-    // Take item --------------------------------------------------------------------------------------
+    // Take item ----------------------------------------------------------------------------------
     template <typename Array, unsigned long Count>
     struct take;
 
@@ -109,7 +113,7 @@ namespace Private
         using type = ctarray<Type>;
     };
 
-    // Search item ------------------------------------------------------------------------------------
+    // Search item --------------------------------------------------------------------------------
     template <typename Type, typename Array, Type S>
     struct search;
 
@@ -136,6 +140,98 @@ namespace Private
     {
         static constexpr unsigned long value = 0;
     };
+
+    // Merge --------------------------------------------------------------------------------------
+    template <typename Type, typename Array1, typename Array2>
+    struct merge;
+
+    template <typename Type, Type I0, Type... Is, Type J0, Type... Js>
+    struct merge<Type, ctarray<Type, I0, Is...>, ctarray<Type, J0, Js...>>
+    {
+        using type = std::conditional_t<(I0 < J0),
+            typename prepend<Type, I0, typename merge<Type, ctarray<Type, Is...>, ctarray<Type, J0, Js...>>::type>::type,
+            typename prepend<Type, J0, typename merge<Type, ctarray<Type, I0, Is...>, ctarray<Type, Js...>>::type>::type
+            >;
+    };
+
+    template <typename Type, Type I0, Type J0, Type... Js>
+    struct merge<Type, ctarray<Type, I0>, ctarray<Type, J0, Js...>>
+    {
+        using type = std::conditional_t<(I0 < J0),
+            typename prepend<Type, I0, typename merge<Type, ctarray<Type>, ctarray<Type, J0, Js...>>::type>::type,
+            typename prepend<Type, J0, typename merge<Type, ctarray<Type, I0>, ctarray<Type, Js...>>::type>::type
+            >;
+    };
+
+    template <typename Type, Type I0, Type... Is, Type J0>
+    struct merge<Type, ctarray<Type, I0, Is...>, ctarray<Type, J0>>
+    {
+        using type = std::conditional_t<(I0 < J0),
+            typename prepend<Type, I0, typename merge<Type, ctarray<Type, Is...>, ctarray<Type, J0>>::type>::type,
+            typename prepend<Type, J0, typename merge<Type, ctarray<Type, I0, Is...>, ctarray<Type>>::type>::type
+            >;
+    };
+
+    template <typename Type, Type... Js>
+    struct merge<Type, ctarray<Type>, ctarray<Type, Js...>>
+    {
+        static constexpr unsigned long length = sizeof...(Js);
+        using L = typename take<ctarray<Type, Js...>, length / 2>::type;
+        using R = typename drop<ctarray<Type, Js...>, length / 2>::type;
+        using type = typename merge<Type, L, R>::type;
+    };
+
+    template <typename Type, Type... Is>
+    struct merge<Type, ctarray<Type, Is...>, ctarray<Type>>
+    {
+        static constexpr unsigned long length = sizeof...(Is);
+        using L = typename take<ctarray<Type, Is...>, length / 2>::type;
+        using R = typename drop<ctarray<Type, Is...>, length / 2>::type;
+        using type = typename merge<Type, L, R>::type;
+    };
+
+    template <typename Type, Type I0, Type J0>
+    struct merge<Type, ctarray<Type, I0>, ctarray<Type, J0>>
+    {
+        using type = std::conditional_t<(I0 < J0),
+            ctarray<Type, I0, J0>,
+            ctarray<Type, J0, I0>>;
+    };
+
+    // Sort ---------------------------------------------------------------------------------------
+    template <typename Type, typename Array>
+    struct sort;
+
+    template <typename Type, Type... Is>
+    struct sort<Type, ctarray<Type, Is...>>
+    {
+        static constexpr unsigned long length = sizeof...(Is);
+        using type = typename merge<Type,
+            typename sort<Type, typename take<ctarray<Type, Is...>, length / 2>::type>::type,
+            typename sort<Type, typename drop<ctarray<Type, Is...>, length / 2>::type>::type
+        >::type;
+    };
+
+    template <typename Type, Type I0, Type J0>
+    struct sort<Type, ctarray<Type, I0, J0>>
+    {
+        using type = std::conditional_t<(I0 < J0),
+            ctarray<Type, I0, J0>,
+            ctarray<Type, J0, I0>
+            >;
+    };
+
+    template <typename Type, Type I0>
+    struct sort<Type, ctarray<Type, I0>>
+    {
+        using type = ctarray<Type, I0>;
+    };
+
+    template <typename Type>
+    struct sort<Type, ctarray<Type>>
+    {
+        using type = ctarray<Type>;
+    };
 }
 
 template <typename Array, unsigned long Index>
@@ -155,3 +251,6 @@ using ctarray_prepend_t = Private::prepend<Type, Item, Array>::type;
 
 template <typename Type, typename Array, Type Item>
 constexpr inline auto ctarray_search_v = Private::search<Type, Array, Item>::value;
+
+template <typename Type, typename Array>
+using ctarray_sort_t = Private::sort<Type, Array>::type;
