@@ -52,7 +52,7 @@ struct Cstring
         0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
     };
 
-    constexpr Cstring() = default;
+    constexpr Cstring() : c_str{0}, is_empty{true} {};
     constexpr Cstring(const char *str)
     {
         unsigned long idx = 0;
@@ -64,6 +64,8 @@ struct Cstring
             ++idx;
             ++p;
         }
+
+        is_empty = false;
     }
 
     constexpr ~Cstring() {}
@@ -86,6 +88,9 @@ struct Cstring
 
     constexpr unsigned int get_crc32(void) const
     {
+        if (is_empty)
+            return 0;
+
         unsigned int crc = ~0U;
 
         for (unsigned long i = 0; i < Size; ++i)
@@ -94,12 +99,14 @@ struct Cstring
         return (crc ^ ~0U);
     }
 
+    bool is_empty = true;
     char c_str[Size] = {0};
 };
 
 template <typename Type>
 struct Pair
 {
+    constexpr Pair() : first{}, second{} {}
     constexpr Pair(const Cstring<64>& key, const Type& value)
     {
         this->first = key;
@@ -113,9 +120,18 @@ struct Pair
 
     constexpr auto operator<(const Pair& pair) const
     {
-        return (this->first < pair.first);
+        return (this->first.get_crc32() < pair.first.get_crc32());
     }
 
     Cstring<64> first;
     Type second;
+};
+
+
+template <typename Type, unsigned long Size, Pair<Type>... Pairs>
+struct Map
+{
+    using type = ctarray_sort_t<Pair<Type>, ctarray_fit_t<Pair<Type>, ctarray<Pair<Type>, Pairs...>, Size - sizeof...(Pairs)>>;
+
+    static constexpr std::array<Pair<Type>, Size> arr = type::arr;
 };

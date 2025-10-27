@@ -3,7 +3,10 @@
 #include <type_traits>
 
 template <typename Type, Type... Is>
-struct ctarray;
+struct ctarray
+{
+    static constexpr std::array<Type, sizeof...(Is)> arr = {Is...};
+};
 
 namespace Private
 {
@@ -112,8 +115,24 @@ namespace Private
     {
         using type = ctarray<Type>;
     };
+    
+    // Fit ----------------------------------------------------------------------------------------
+    template <typename Type, typename Array, unsigned long Count>
+    struct fit;
 
-    // Search item --------------------------------------------------------------------------------
+    template <typename Type, Type... Is, unsigned long Count>
+    struct fit<Type, ctarray<Type, Is...>, Count>
+    {
+        using type = typename fit<Type, typename prepend<Type, Type{}, ctarray<Type, Is...>>::type, Count - 1>::type;
+    };
+
+    template <typename Type, Type... Is>
+    struct fit<Type, ctarray<Type, Is...>, 0>
+    {
+        using type = ctarray<Type, Is...>;
+    };
+
+    // Search -------------------------------------------------------------------------------------
     template <typename Type, typename Array, Type S>
     struct search;
 
@@ -254,3 +273,6 @@ constexpr inline auto ctarray_search_v = Private::search<Type, Array, Item>::val
 
 template <typename Type, typename Array>
 using ctarray_sort_t = Private::sort<Type, Array>::type;
+
+template <typename Type, typename Array, unsigned long Count>
+using ctarray_fit_t = Private::fit<Type, Array, Count>::type;
