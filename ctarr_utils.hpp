@@ -251,6 +251,22 @@ namespace Private
     {
         using type = ctarray<Type>;
     };
+
+    // Normalize ----------------------------------------------------------------------------------
+    template <typename Type, typename Array, unsigned long Fact>
+    struct normalize;
+
+    template <typename Type, Type I0, Type... Is, unsigned long Fact>
+    struct normalize<Type, ctarray<Type, I0, Is...>, Fact> 
+    {
+        using type = typename prepend<Type, I0 % Fact, typename normalize<Type, ctarray<Type, Is...>, Fact>::type>::type;
+    };
+
+    template <typename Type, Type I0, unsigned long Fact>
+    struct normalize<Type, ctarray<Type, I0>, Fact> 
+    {
+        using type = ctarray<Type, I0 % Fact>; 
+    };
 }
 
 template <typename Array, unsigned long Index>
@@ -276,3 +292,6 @@ using ctarray_sort_t = Private::sort<Type, Array>::type;
 
 template <typename Type, typename Array, unsigned long Count>
 using ctarray_fit_t = Private::fit<Type, Array, Count>::type;
+
+template <typename Type, typename Array, unsigned long Fact>
+using ctarray_norm_t = Private::normalize<Type, Array, Fact>::type;

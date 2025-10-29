@@ -106,32 +106,48 @@ struct Cstring
 template <typename Type>
 struct Pair
 {
-    constexpr Pair() : first{}, second{} {}
+    constexpr Pair() : crc{}, first{}, second{} {}
+
+    constexpr Pair(const Cstring<64>& key, const Type& value, unsigned long crc) {}
+
     constexpr Pair(const Cstring<64>& key, const Type& value)
     {
+        this->crc = key.get_crc32();
         this->first = key;
         this->second = value;
     }
 
+    constexpr Pair(const Pair& pair)
+    {
+        this->crc = pair.crc;
+        this->first = pair.first;
+        this->second = pair.second;
+    }
+
     constexpr auto operator<=>(const Pair& pair) const
     {
-        return (this->first <=> pair.first);
+        return (this->crc <=> pair.crc);
     }
 
     constexpr auto operator<(const Pair& pair) const
     {
-        return (this->first.get_crc32() < pair.first.get_crc32());
+        return (this->crc < pair.crc);
     }
 
+    constexpr auto operator%(const unsigned long val) const
+    {
+        return Pair<Type>(first, second, crc % val);
+    }
+
+    unsigned int crc;
     Cstring<64> first;
     Type second;
-};
-
+}; 
 
 template <typename Type, unsigned long Size, Pair<Type>... Pairs>
 struct Map
 {
-    using type = ctarray_sort_t<Pair<Type>, ctarray_fit_t<Pair<Type>, ctarray<Pair<Type>, Pairs...>, Size - sizeof...(Pairs)>>;
+    using type = ctarray_sort_t<Pair<Type>, ctarray_fit_t<Pair<Type>, ctarray_norm_t<Pair<Type>, ctarray<Pair<Type>, Pairs...>, Size>, Size - sizeof...(Pairs)>>;
 
     static constexpr std::array<Pair<Type>, Size> arr = type::arr;
 };
