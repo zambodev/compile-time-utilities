@@ -20,13 +20,13 @@ static_assert(ctarray_cmp_v<
 
 int main(void)
 {
-    // using map = Map<int, 16,
-    //     Pair<int>(Cstring<64>("ciao"), 10),
-    //     Pair<int>(Cstring<64>("helo"), 9)
-    // >;
+    using map = Map<int, 16,
+        Pair("ciao", 10),
+        Pair("helo", 9)
+    >;
 
-    // for (unsigned long i = 0; i < map::arr.size(); ++i)
-    // {
-    //     std::cout << map::arr[i].first.get_crc32() << " " << map::arr[i].second << "\n";
-    // }
+    for (unsigned long i = 0; i < map::arr.size(); ++i)
+    {
+        std::cout << map::arr[i].first.get_crc32() << " " << map::arr[i].second << "\n";
+    }
 }
