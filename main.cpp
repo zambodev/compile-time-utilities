@@ -18,15 +18,30 @@ static_assert(ctarray_cmp_v<
               ctarray<int, 1, 2, 3, 4, 5>
               >);
 
+
+template <typename Type, Type I0>
+auto test(unsigned long val)
+{
+    return I0 % val;
+}
+
+
 int main(void)
 {
-    using map = Map<int, 16,
-        Pair("ciao", 10),
-        Pair("helo", 9)
-    >;
+    // using map = Map<int, 16,
+    //     Pair("ciao", 10),
+    //     Pair("helo", 9)
+    // >;
 
-    for (unsigned long i = 0; i < map::arr.size(); ++i)
+    using arr = ctarray_norm_t<Pair<int>,
+        ctarray<Pair<int>, Pair("ciao", 2), Pair("hello", 3)>,
+        26>;
+
+    for (unsigned long i = 0; i < arr::arr.size(); ++i)
     {
-        std::cout << map::arr[i].first.get_crc32() << " " << map::arr[i].second << "\n";
+        std::cout << arr::arr[i].crc << " " << arr::arr[i].second << "\n";
     }
+
+    auto p = test<Pair<int>, Pair<int>("ciao", 2)>(4);
+    std::cout << p.crc << "\n";
 }

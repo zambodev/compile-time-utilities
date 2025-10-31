@@ -60,7 +60,12 @@ struct Pair
 {
     constexpr Pair() : crc{}, first{}, second{} {}
 
-    constexpr Pair(const Cstring<64>& key, const Type& value, unsigned long crc) {}
+    constexpr Pair(const Cstring<64>& key, const Type& value, unsigned long crc)
+    {
+        this->first = key;
+        this->second = value;
+        this->crc = crc;
+    }
 
     constexpr Pair(const Cstring<64>& key, const Type& value)
     {
