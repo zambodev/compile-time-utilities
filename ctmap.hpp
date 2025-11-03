@@ -1,17 +1,22 @@
+#include <pthread.h>
 #include <utility>
 #include <array>
 #include "ctarr_utils.hpp"
 
-template <unsigned long Size>
 struct Cstring
 {
+    static constexpr unsigned long SIZE = 64;
+
+    bool is_empty = true;
+    char c_str[SIZE] = {0};
+
     constexpr Cstring() : c_str{0}, is_empty{true} {};
     constexpr Cstring(const char *str)
     {
         unsigned long idx = 0;
         const char *p = str;
 
-        while (*p != '\0' && idx < Size)
+        while (*p != '\0' && idx < SIZE)
         {
             c_str[idx] = *p;
             ++idx;
@@ -42,32 +47,41 @@ struct Cstring
     constexpr unsigned int get_crc32(void) const
     {
         unsigned int crc = 0xFFFFFFFF;
-        for (unsigned long i = 0; i < Size; ++i)
+
+        for (unsigned long i = 0; i < SIZE; ++i)
         {
             crc ^= static_cast<unsigned char>(c_str[i]);
             for (int i = 0; i < 8; ++i)
                 crc = (crc >> 1) ^ (0xEDB88320 & (-(crc & 1)));
         }
+
         return ~crc;
     }
 
-    bool is_empty = true;
-    char c_str[Size] = {0};
+    static constexpr unsigned int static_crc32(const char *str)
+    {
+        Cstring cstr(str);
+        return cstr.get_crc32();
+    }
 };
 
 template <typename Type>
 struct Pair
 {
+    unsigned int crc{};
+    Cstring first{};
+    Type second{};
+
     constexpr Pair() : crc{}, first{}, second{} {}
 
-    constexpr Pair(const Cstring<64>& key, const Type& value, unsigned long crc)
+    constexpr Pair(const Cstring& key, const Type& value, unsigned long crc)
     {
         this->first = key;
         this->second = value;
         this->crc = crc;
     }
 
-    constexpr Pair(const Cstring<64>& key, const Type& value)
+    constexpr Pair(const Cstring& key, const Type& value)
     {
         this->crc = key.get_crc32();
         this->first = key;
@@ -86,6 +100,11 @@ struct Pair
         return (this->crc <=> pair.crc);
     }
 
+    constexpr bool operator==(const Pair& pair) const
+    {
+        return (this->crc == pair.crc);
+    }
+
     constexpr auto operator<(const Pair& pair) const
     {
         return (this->crc < pair.crc);
@@ -95,16 +114,71 @@ struct Pair
     {
         return Pair<Type>(first, second, crc % val);
     }
-
-    unsigned int crc{};
-    Cstring<64> first{};
-    Type second{};
 }; 
+
+template <typename Type, typename Array>
+struct map_to_runtime;
+
+template <typename Type, Pair<Type>... Ps>
+struct map_to_runtime<Type, ctarray<Pair<Type>, Ps...>> {
+    static constexpr std::array<Type, sizeof...(Ps)> value = {
+        { { Ps.second }... }
+    };
+};
+
+// Pad --------------------------------------------------------------------------------------------
+template <typename Type, typename Array, unsigned int Last = 0>
+struct pad;
+
+template <typename Type, Pair<Type> I0, Pair<Type>... Is, unsigned int Last>
+struct pad<Type, ctarray<Pair<Type>, I0, Is...>, Last>
+{
+    using fit_item = ctarray_fit_t<Pair<Type>, ctarray<Pair<Type>, I0>, (Last == 0
+                                                                         ? I0.crc - Last
+                                                                         : I0.crc - Last - 1)>;
+    using type = ctarray_concat_t<Pair<Type>,
+                                  fit_item,
+                                  typename pad<Type, ctarray<Pair<Type>, Is...>, I0.crc>::type
+    >;
+};
+
+template <typename Type, Pair<Type> I0, unsigned int Last>
+struct pad<Type, ctarray<Pair<Type>, I0>, Last>
+{
+    using type = ctarray_fit_t<Pair<Type>, ctarray<Pair<Type>, I0>, I0.crc - Last - 1>;
+};
 
 template <typename Type, unsigned long Size, Pair<Type>... Pairs>
 struct Map
 {
-    using type = ctarray_sort_t<Pair<Type>, ctarray_fit_t<Pair<Type>, ctarray_norm_t<Pair<Type>, ctarray<Pair<Type>, Pairs...>, Size>, Size - sizeof...(Pairs)>>;
+    using norm_arr = ctarray_norm_t<Pair<Type>, ctarray_sort_t<Pair<Type>, ctarray<Pair<Type>, Pairs...>>, Size>;
+    static_assert(ctarray_doubles_v<Pair<Type>, norm_arr> == false);
+    using padded = typename pad<Type, norm_arr>::type;
 
-    static constexpr std::array<Pair<Type>, Size> arr = type::arr;
+    static constexpr std::array<Type, padded::arr.size()> arr = map_to_runtime<Type, padded>::value;
 };
+
+// template <typename Type, typename Array>
+// struct test;
+
+// template <typename Type, Pair<Type> I0, Pair<Type> I1, Pair<Type>... Rs, Pair<Type>... Ls>
+// struct test<Type, ctarray<Pair<Type>, I0, I1, Ls...>>
+// {
+//     using fit_item = ctarray_fit_t<Pair<Type>, ctarray<Pair<Type>, I1>, I1.crc - I0.crc>;
+//     using next_item = 
+//     using type = 
+// };
+
+// template <typename Type, Pair<Type> I0, Pair<Type>... Is>
+// struct test<Type, ctarray<Pair<Type>, I0, Is...>>
+// {
+//     using fit_item = ctarray_fit_t<Pair<Type>, ctarray<Pair<Type>, I0>, I0.crc>;
+//     using next_item = typename test<Type, ctarray<Pair<Type>, Is...>::type;
+//     using type = 
+// };
+
+// template <typename Type, Pair<Type> I0>
+// struct test<Type, ctarray<Pair<Type>, I0>>
+// {
+//     using type = ctarray_fit_t<Pair<Type>, ctarray<Pair<Type>, I0>, I0.crc>;
+// };

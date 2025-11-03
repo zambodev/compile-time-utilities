@@ -1,6 +1,7 @@
 #pragma once
 
 #include <type_traits>
+#include <array>
 
 template <typename Type, Type... Is>
 struct ctarray
@@ -267,6 +268,35 @@ namespace Private
     {
         using type = ctarray<Type, I0 % Fact>; 
     };
+
+    // Doubles ------------------------------------------------------------------------------------
+    // Array needs to be sorted first
+    template <typename Type, typename Array>
+    struct doubles;
+
+    template <typename Type, Type I0, Type I1, Type... Is>
+    struct doubles<Type, ctarray<Type, I0, I1, Is...>>
+    {
+        static constexpr bool value = (I0 == I1
+                                       ? true
+                                       : doubles<Type, ctarray<Type, I1, Is...>>::value);
+    };
+
+    template <typename Type, Type I0, Type I1>
+    struct doubles<Type, ctarray<Type, I0, I1>>
+    {
+        static constexpr bool value = (I0 == I1 ? true : false);
+    };
+
+    // Concat -------------------------------------------------------------------------------------
+    template <typename Type, typename Array0, typename Array1>
+    struct concat;
+
+    template <typename Type, Type... Items0, Type... Items1>
+    struct concat<Type, ctarray<Type, Items0...>, ctarray<Type, Items1...>>
+    {
+        using type = ctarray<Type, Items0..., Items1...>;
+    };
 }
 
 template <typename Array, unsigned long Index>
@@ -295,3 +325,9 @@ using ctarray_fit_t = Private::fit<Type, Array, Count>::type;
 
 template <typename Type, typename Array, unsigned long Fact>
 using ctarray_norm_t = Private::normalize<Type, Array, Fact>::type;
+
+template <typename Type, typename Array>
+constexpr inline bool ctarray_doubles_v = Private::doubles<Type, Array>::value;
+
+template <typename Type, typename Array0, typename Array1>
+using ctarray_concat_t = Private::concat<Type, Array0, Array1>::type;
