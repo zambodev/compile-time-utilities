@@ -116,6 +116,7 @@ struct Pair
     }
 }; 
 
+// Map to std::array ------------------------------------------------------------------------------
 template <typename Type, typename Array>
 struct map_to_runtime;
 
@@ -149,7 +150,7 @@ struct pad<Type, ctarray<Pair<Type>, I0>, Last>
 };
 
 template <typename Type, unsigned long Size, Pair<Type>... Pairs>
-struct Map
+struct map
 {
     using norm_arr = ctarray_norm_t<Pair<Type>, ctarray_sort_t<Pair<Type>, ctarray<Pair<Type>, Pairs...>>, Size>;
     static_assert(ctarray_doubles_v<Pair<Type>, norm_arr> == false);
@@ -158,27 +159,31 @@ struct Map
     static constexpr std::array<Type, padded::arr.size()> arr = map_to_runtime<Type, padded>::value;
 };
 
-// template <typename Type, typename Array>
-// struct test;
+template <typename Type, unsigned long Size, Pair<Type>... Pairs>
+class Cmap
+{
+public:
+    constexpr Cmap() {}
+    constexpr ~Cmap() {}
 
-// template <typename Type, Pair<Type> I0, Pair<Type> I1, Pair<Type>... Rs, Pair<Type>... Ls>
-// struct test<Type, ctarray<Pair<Type>, I0, I1, Ls...>>
-// {
-//     using fit_item = ctarray_fit_t<Pair<Type>, ctarray<Pair<Type>, I1>, I1.crc - I0.crc>;
-//     using next_item = 
-//     using type = 
-// };
+    void print(void)
+    {
+        for (unsigned long i = 0; i < cmap::arr.size(); ++i)
+            std::cout << "[" << i << "]" << " " << cmap::arr[i] << "\n";
+        std::cout << "-----------------\n";
+    }
 
-// template <typename Type, Pair<Type> I0, Pair<Type>... Is>
-// struct test<Type, ctarray<Pair<Type>, I0, Is...>>
-// {
-//     using fit_item = ctarray_fit_t<Pair<Type>, ctarray<Pair<Type>, I0>, I0.crc>;
-//     using next_item = typename test<Type, ctarray<Pair<Type>, Is...>::type;
-//     using type = 
-// };
+    Type get(const Cstring &str) const
+    {
+        unsigned int idx = str.get_crc32() % Size;
 
-// template <typename Type, Pair<Type> I0>
-// struct test<Type, ctarray<Pair<Type>, I0>>
-// {
-//     using type = ctarray_fit_t<Pair<Type>, ctarray<Pair<Type>, I0>, I0.crc>;
-// };
+        if (idx >= cmap::arr.size())
+            throw std::runtime_error("Key not found");
+
+        return cmap::arr[idx];
+    }
+
+private:
+    using cmap = map<Type, Size, Pairs...>;
+
+};
