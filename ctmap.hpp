@@ -150,18 +150,19 @@ namespace ctmap
             using type = ctarray_fit_t<Pair<Type>, ctarray<Pair<Type>, I0>, I0.crc - Last - 1>;
         };
 
-        template <typename Type, unsigned long Size, Pair<Type>... Pairs>
+        template <typename Type, unsigned long Fact, Pair<Type>... Pairs>
         struct map
         {
-            using norm_arr = ctarray_norm_t<Pair<Type>, ctarray_sort_t<Pair<Type>, ctarray<Pair<Type>, Pairs...>>, Size>;
+            using norm_arr = ctarray_norm_t<Pair<Type>, ctarray<Pair<Type>, Pairs...>, Fact>;
+            using sorted_arr = ctarray_sort_t<Pair<Type>, norm_arr>;
             static_assert(ctarray_doubles_v<Pair<Type>, norm_arr> == false);
-            using padded = typename pad<Type, norm_arr>::type;
+            using padded = typename pad<Type, sorted_arr>::type;
 
             static constexpr std::array<Type, padded::arr.size()> arr = map_to_runtime<Type, padded>::value;
         };
     }
 
-    template <typename Type, unsigned long Size, Private::Pair<Type>... Pairs>
+    template <typename Type, unsigned long Fact, Private::Pair<Type>... Pairs>
     class CTMap
     {
     public:
@@ -177,7 +178,7 @@ namespace ctmap
 
         Type operator[](const Private::Cstring &str) const
         {
-            unsigned int idx = str.get_crc32() % Size;
+            unsigned int idx = str.get_crc32() % Fact;
 
             if (idx >= cmap::arr.size())
                 throw std::runtime_error("Key not found");
@@ -186,6 +187,6 @@ namespace ctmap
         }
 
     private:
-        using cmap = Private::map<Type, Size, Pairs...>;
+        using cmap = Private::map<Type, Fact, Pairs...>;
     };
 }

@@ -19,7 +19,7 @@ static_assert(ctmap::ctarray_cmp_v<ctmap::ctarray_sort_t<int, ctmap::ctarray<int
 
 int main(void)
 {
-    ctmap::CTMap<int, 16,
+    ctmap::CTMap<int, 8,
                  {"ciao", 10},
                  {"helo", 9},
                  {"hallo", 2}>
@@ -27,4 +27,8 @@ int main(void)
 
     cmap.print();
     std::cout << "Value of 'hallo': " << cmap["hallo"] << "\n";
+
+    constexpr auto arr = ctmap::ctarray_norm_t<int,
+                                               ctmap::ctarray<int, 1134134134, 1314124124, 124124124>,
+                                               64>::arr;
 }
