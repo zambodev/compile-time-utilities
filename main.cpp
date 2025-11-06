@@ -2,29 +2,29 @@
 #include "ctarr_utils.hpp"
 #include "ctmap.hpp"
 
-static_assert(ctarray_cmp_v<ctarray<int, 1,2,3>, ctarray<int, 1,2,3>>);
-static_assert(ctarray_get_v<ctarray<int, 1,2,3>, 2> == 3);
-static_assert(ctarray_cmp_v<ctarray_drop_t<ctarray<int, 1,2,3>, 2>, ctarray<int, 3>>);
-static_assert(ctarray_cmp_v<ctarray_prepend_t<int, 1, ctarray<int, 2, 3>>, ctarray<int, 1, 2, 3>>);
-static_assert(ctarray_cmp_v<ctarray_take_t<ctarray<int, 1,2,3>, 2>, ctarray<int, 1,2>>);
-static_assert(ctarray_get_v<ctarray<int, 1,2,3>, 1> == 2);
-static_assert(ctarray_search_v<int, ctarray<int, 1>, 1> == 0);
-static_assert(ctarray_cmp_v<ctarray_fit_t<int, ctarray<int, 3, 4>, 2>, ctarray<int, 0, 0, 3, 4>>);
-static_assert(ctarray_cmp_v<ctarray_norm_t<int, ctarray<int, 12, 13, 14>, 8>, ctarray<int, 4, 5, 6>>);
-static_assert(ctarray_doubles_v<int, ctarray<int, 1, 2, 3, 4, 4, 5, 6>> == true);
-static_assert(ctarray_cmp_v<ctarray_concat_t<int, ctarray<int, 1, 2, 3>, ctarray<int, 4, 5, 6>>,
-                            ctarray<int, 1, 2, 3, 4, 5, 6>>);
-static_assert(ctarray_cmp_v<ctarray_sort_t<int, ctarray<int, 3, 5, 1, 2, 4>>,
-                            ctarray<int, 1, 2, 3, 4, 5>>);
+static_assert(ctmap::ctarray_cmp_v<ctmap::ctarray<int, 1, 2, 3>, ctmap::ctarray<int, 1, 2, 3>>);
+static_assert(ctmap::ctarray_get_v<ctmap::ctarray<int, 1, 2, 3>, 2> == 3);
+static_assert(ctmap::ctarray_cmp_v<ctmap::ctarray_drop_t<ctmap::ctarray<int, 1, 2, 3>, 2>, ctmap::ctarray<int, 3>>);
+static_assert(ctmap::ctarray_cmp_v<ctmap::ctarray_prepend_t<int, 1, ctmap::ctarray<int, 2, 3>>, ctmap::ctarray<int, 1, 2, 3>>);
+static_assert(ctmap::ctarray_cmp_v<ctmap::ctarray_take_t<ctmap::ctarray<int, 1, 2, 3>, 2>, ctmap::ctarray<int, 1, 2>>);
+static_assert(ctmap::ctarray_get_v<ctmap::ctarray<int, 1, 2, 3>, 1> == 2);
+static_assert(ctmap::ctarray_search_v<int, ctmap::ctarray<int, 1>, 1> == 0);
+static_assert(ctmap::ctarray_cmp_v<ctmap::ctarray_fit_t<int, ctmap::ctarray<int, 3, 4>, 2>, ctmap::ctarray<int, 0, 0, 3, 4>>);
+static_assert(ctmap::ctarray_cmp_v<ctmap::ctarray_norm_t<int, ctmap::ctarray<int, 12, 13, 14>, 8>, ctmap::ctarray<int, 4, 5, 6>>);
+static_assert(ctmap::ctarray_doubles_v<int, ctmap::ctarray<int, 1, 2, 3, 4, 4, 5, 6>> == true);
+static_assert(ctmap::ctarray_cmp_v<ctmap::ctarray_concat_t<int, ctmap::ctarray<int, 1, 2, 3>, ctmap::ctarray<int, 4, 5, 6>>,
+                                   ctmap::ctarray<int, 1, 2, 3, 4, 5, 6>>);
+static_assert(ctmap::ctarray_cmp_v<ctmap::ctarray_sort_t<int, ctmap::ctarray<int, 3, 5, 1, 2, 4>>,
+                                   ctmap::ctarray<int, 1, 2, 3, 4, 5>>);
 
 int main(void)
 {
-    Cmap<int, 16,
-        Pair("ciao", 10),
-        Pair("helo", 9),
-        Pair("hallo", 2)
-    > cmap;
+    ctmap::CTMap<int, 16,
+                 {"ciao", 10},
+                 {"helo", 9},
+                 {"hallo", 2}>
+        cmap;
 
     cmap.print();
-    std::cout << cmap.get("hallo") << "\n";
+    std::cout << "Value of 'hallo': " << cmap["hallo"] << "\n";
 }
