@@ -59,6 +59,10 @@ struct ctstring {
     return ctstring<Size>(static_cast<const char*>(c_str), crc32 % val);
   }
 
+  constexpr unsigned int operator-(const unsigned int val) const {
+    return crc32 - val;
+  }
+
   constexpr unsigned int get_crc32(void) const {
     unsigned int crc = 0xFFFFFFFF;
 

@@ -35,8 +35,14 @@ static_assert(ctu::ctarray_cmp_v<
               ctu::ctarray<int, 1, 2, 3, 4, 5>>);
 
 int main(void) {
-  ctu::ctmap<int, 8, {"ciao", 10}, {"helo", 9}, {"hallo", 2}> cmap;
+  ctu::ctmap<ctu::ctstring<64>, int, 8, {"ciao", 10}, {"helo", 9}, {"hallo", 2}>
+      cmap;
 
   cmap.print();
   std::cout << "Value of 'hallo': " << cmap["hallo"] << "\n";
+
+  ctu::ctmap<int, int, 8, {1324234213, 2}, {3789987, 4}, {213235689, 6}> cmap2;
+  cmap2.print();
+
+  std::cout << "Value of '3789987': " << cmap2[3789987] << "\n";
 }
