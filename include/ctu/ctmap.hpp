@@ -1,10 +1,13 @@
 #pragma once
 
-#include <ctarray.hpp>
-#include <ctpair.hpp>
-#include <ctstring.hpp>
+#include <ctu/ctarray.hpp>
+#include <ctu/ctpair.hpp>
+#include <ctu/ctstring.hpp>
 #include <stdexcept>
 #include <utility>
+#ifdef CTU_DEBUG
+#include <iostream>
+#endif
 
 namespace ctu {
 
@@ -101,10 +104,12 @@ class ctmap {
     return cmap::arr[idx];
   }
 
+#ifdef CTU_DEBUG
   void print(void) const {
     for (unsigned long i = 0; i < cmap::arr.size(); ++i)
       std::cout << "[" << i << "] = " << cmap::arr[i] << "\n";
   }
+#endif
 
  private:
   using cmap = Private::map<FirstType, SecondType, Fact, Pairs...>;

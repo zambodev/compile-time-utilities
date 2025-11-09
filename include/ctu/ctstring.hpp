@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ctarray.hpp>
+#include <ctu/ctarray.hpp>
 
 namespace ctu {
 

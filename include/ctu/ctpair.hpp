@@ -1,7 +1,7 @@
 #pragma once
 
-#include <ctarray.hpp>
-#include <ctstring.hpp>
+#include <ctu/ctarray.hpp>
+#include <ctu/ctstring.hpp>
 
 namespace ctu {
 

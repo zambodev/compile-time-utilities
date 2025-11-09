@@ -1,7 +1,6 @@
+#include <ctu/ctarray.hpp>
+#include <ctu/ctmap.hpp>
 #include <iostream>
-
-#include "ctarray.hpp"
-#include "ctmap.hpp"
 
 static_assert(
     ctu::ctarray_cmp_v<ctu::ctarray<int, 1, 2, 3>, ctu::ctarray<int, 1, 2, 3>>);

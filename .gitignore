@@ -1,3 +1,9 @@
-.vscode
+.vscode/
+CMakeFiles/
 
 *.out
+*.cmake
+Makefile
+CMakeCache.txt
+
+tests/tests_main
