@@ -4,15 +4,13 @@
 #include <ctu/ctpair.hpp>
 #include <ctu/ctstring.hpp>
 #include <stdexcept>
+#include <type_traits>
 #include <utility>
 #ifdef CTU_DEBUG
 #include <iostream>
 #endif
 
 namespace ctu {
-
-template <typename Type>
-using mappair = ctpair<ctstring<64>, Type>;
 
 namespace Private {
 
@@ -61,26 +59,43 @@ struct pad<FirstType, SecondType, ctarray<ctpair<FirstType, SecondType>, I0>,
 };
 
 template <typename FirstType, typename SecondType, unsigned long Fact,
-          ctpair<FirstType, SecondType>... Pairs>
-struct map {
+          bool Found, typename Array>
+struct map;
+
+template <typename FirstType, typename SecondType, unsigned long Fact,
+          ctpair<FirstType, SecondType>... Ps>
+struct map<FirstType, SecondType, Fact, false,
+           ctarray<ctpair<FirstType, SecondType>, Ps...>> {
   using norm_arr =
       ctarray_norm_t<ctpair<FirstType, SecondType>,
-                     ctarray<ctpair<FirstType, SecondType>, Pairs...>, Fact>;
+                     ctarray<ctpair<FirstType, SecondType>, Ps...>, Fact>;
   using sorted_arr = ctarray_sort_t<ctpair<FirstType, SecondType>, norm_arr>;
-  static_assert(ctarray_doubles_v<ctpair<FirstType, SecondType>, sorted_arr> ==
-                false);
-  using padded = typename pad<FirstType, SecondType, sorted_arr>::type;
 
-  using stdarray = std::array<SecondType, padded::arr.size()>;
-  static constexpr stdarray arr =
-      map_to_stdarray<FirstType, SecondType, padded>::value;
+  static constexpr bool doubles_found =
+      ctarray_doubles_v<ctpair<FirstType, SecondType>, sorted_arr>;
+
+  using func =
+      std::conditional_t<doubles_found,
+                         map<FirstType, SecondType, Fact + 1, false,
+                             ctarray<ctpair<FirstType, SecondType>, Ps...>>,
+                         map<FirstType, SecondType, Fact, true, sorted_arr>>;
+  using type = typename func::type;
+  static constexpr unsigned long value = func::value;
 };
+
+template <typename FirstType, typename SecondType, unsigned long Fact,
+          typename Array>
+struct map<FirstType, SecondType, Fact, true, Array> {
+  using type = typename pad<FirstType, SecondType, Array>::type;
+  static constexpr unsigned long value = Fact;
+};
+
 }  // namespace Private
 // ################################################################################################
 
 // ctmap
 // ------------------------------------------------------------------------------------------------
-template <typename FirstType, typename SecondType, unsigned long Fact,
+template <typename FirstType, typename SecondType,
           ctpair<FirstType, SecondType>... Pairs>
 class ctmap {
  public:
@@ -88,31 +103,38 @@ class ctmap {
   constexpr ~ctmap() = default;
 
   SecondType operator[](const ctstring<64>& key) const {
-    unsigned int idx = (key % Fact).crc32;
+    unsigned int idx = (key % cmap_v).crc32;
 
-    if (idx >= cmap::arr.size()) throw std::runtime_error("Key not found");
+    if (idx >= arr.size()) throw std::runtime_error("Key not found");
 
-    return cmap::arr[idx];
+    return arr[idx];
   }
 
   template <std::integral T>
   SecondType operator[](const T& key) const {
-    unsigned int idx = key % Fact;
+    unsigned int idx = key % cmap_v;
 
-    if (idx >= cmap::arr.size()) throw std::runtime_error("Key not found");
+    if (idx >= arr.size()) throw std::runtime_error("Key not found");
 
-    return cmap::arr[idx];
+    return arr[idx];
   }
 
 #ifdef CTU_DEBUG
   void print(void) const {
-    for (unsigned long i = 0; i < cmap::arr.size(); ++i)
-      std::cout << "[" << i << "] = " << cmap::arr[i] << "\n";
+    for (unsigned long i = 0; i < arr.size(); ++i)
+      std::cout << "[" << i << "] = " << arr[i] << "\n";
   }
 #endif
 
  private:
-  using cmap = Private::map<FirstType, SecondType, Fact, Pairs...>;
+  using cmap = Private::map<FirstType, SecondType, sizeof...(Pairs), false,
+                            ctarray<ctpair<FirstType, SecondType>, Pairs...>>;
+  using cmap_t = typename cmap::type;
+  static constexpr unsigned long cmap_v = cmap::value;
+
+  using stdarray = std::array<SecondType, cmap_t::arr.size()>;
+  static constexpr stdarray arr =
+      ctu::Private::map_to_stdarray<FirstType, SecondType, cmap_t>::value;
 };
 
 }  // namespace ctu
