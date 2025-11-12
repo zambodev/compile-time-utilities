@@ -44,13 +44,12 @@ int main(void) {
   cmap.print();
   std::cout << "Value of 'hallo': " << cmap["hallo"] << "\n";
 
-  //   constexpr ctu::ctmap<int, void (*)(), 8, {1324234213, func}, {3789987,
-  //   func2},
-  //                        {213235689,
-  //                         [](void) -> void { std::cout << "lambda\n"; }}>
-  //       cmap2;
+  constexpr ctu::ctmap<int, void (*)(), {1324234213, func}, {3789987, func2},
+                       {213235689,
+                        [](void) -> void { std::cout << "lambda\n"; }}>
+      cmap2;
 
-  //   cmap2[1324234213]();
-  //   cmap2[3789987]();
-  //   cmap2[213235689]();
+  cmap2[1324234213]();
+  cmap2[3789987]();
+  cmap2[213235689]();
 }

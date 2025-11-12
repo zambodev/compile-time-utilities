@@ -12,7 +12,7 @@ struct ctarray {
 
 namespace Private {
 
-// Get item
+// Get item at Index
 // ------------------------------------------------------------------------------------------------
 template <typename Array, unsigned long Index>
 struct get;
@@ -27,7 +27,7 @@ struct get<ctarray<Type, I0, Is...>, 0> {
   static constexpr Type value = I0;
 };
 
-// Compare
+// Compare arrays
 // ------------------------------------------------------------------------------------------------
 template <typename Array1, typename Array2>
 struct compare;
@@ -54,14 +54,14 @@ struct compare<ctarray<Type>, ctarray<Type>> {
   static constexpr bool value = true;
 };
 
-// Drop item
+// Drop N items
 // ------------------------------------------------------------------------------------------------
-template <typename Array, unsigned long Count>
+template <typename Array, unsigned long N>
 struct drop;
 
-template <typename Type, Type I0, Type... Is, unsigned long Count>
-struct drop<ctarray<Type, I0, Is...>, Count> {
-  using type = typename drop<ctarray<Type, Is...>, Count - 1>::type;
+template <typename Type, Type I0, Type... Is, unsigned long N>
+struct drop<ctarray<Type, I0, Is...>, N> {
+  using type = typename drop<ctarray<Type, Is...>, N - 1>::type;
 };
 
 template <typename Type, Type I0, Type... Is>
@@ -76,28 +76,29 @@ struct drop<ctarray<Type>, 0> {
 
 // Prepend item
 // ------------------------------------------------------------------------------------------------
-template <typename Type, Type I0, typename Array>
+template <typename Type, Type Item, typename Array>
 struct prepend;
 
-template <typename Type, Type I0, Type... Is>
-struct prepend<Type, I0, ctarray<Type, Is...>> {
-  using type = ctarray<Type, I0, Is...>;
+template <typename Type, Type Item, Type... Is>
+struct prepend<Type, Item, ctarray<Type, Is...>> {
+  using type = ctarray<Type, Item, Is...>;
 };
 
-template <typename Type, Type I0>
-struct prepend<Type, I0, ctarray<Type>> {
-  using type = ctarray<Type, I0>;
+template <typename Type, Type Item>
+struct prepend<Type, Item, ctarray<Type>> {
+  using type = ctarray<Type, Item>;
 };
 
-// Take item
+// Take N items
 // ------------------------------------------------------------------------------------------------
-template <typename Array, unsigned long Count>
+template <typename Array, unsigned long N>
 struct take;
 
-template <typename Type, Type I0, Type... Is, unsigned long Count>
-struct take<ctarray<Type, I0, Is...>, Count> {
-  using type = typename prepend<
-      Type, I0, typename take<ctarray<Type, Is...>, Count - 1>::type>::type;
+template <typename Type, Type I0, Type... Is, unsigned long N>
+struct take<ctarray<Type, I0, Is...>, N> {
+  using type =
+      typename prepend<Type, I0,
+                       typename take<ctarray<Type, Is...>, N - 1>::type>::type;
 };
 
 template <typename Type, Type I0, Type... Is>
@@ -110,17 +111,17 @@ struct take<ctarray<Type>, 0> {
   using type = ctarray<Type>;
 };
 
-// Fit
+// Prepend N zeroes
 // ------------------------------------------------------------------------------------------------
-template <typename Type, typename Array, unsigned long Count>
+template <typename Type, typename Array, unsigned long N>
 struct fit;
 
-template <typename Type, Type... Is, unsigned long Count>
-struct fit<Type, ctarray<Type, Is...>, Count> {
+template <typename Type, Type... Is, unsigned long N>
+struct fit<Type, ctarray<Type, Is...>, N> {
   using type =
       typename fit<Type,
                    typename prepend<Type, Type{}, ctarray<Type, Is...>>::type,
-                   Count - 1>::type;
+                   N - 1>::type;
 };
 
 template <typename Type, Type... Is>
@@ -128,41 +129,41 @@ struct fit<Type, ctarray<Type, Is...>, 0> {
   using type = ctarray<Type, Is...>;
 };
 
-// Search
+// Search Item
 // ------------------------------------------------------------------------------------------------
-template <typename Type, typename Array, Type S>
+template <typename Type, typename Array, Type Item>
 struct search;
 
-template <typename Type, Type... Ls, Type S>
-struct search<Type, ctarray<Type, Ls...>, S> {
+template <typename Type, Type... Ls, Type Item>
+struct search<Type, ctarray<Type, Ls...>, Item> {
   static constexpr unsigned long length = sizeof...(Ls);
   static constexpr unsigned long m0 =
       get<ctarray<Type, Ls...>, length / 2>::value;
   static constexpr unsigned long value =
-      (S == m0
+      (Item == m0
            ? sizeof...(Ls)
-           : (S < m0
+           : (Item < m0
                   ? search<
                         Type,
                         typename take<ctarray<Type, Ls...>, length / 2>::type,
-                        S>::value
+                        Item>::value
                   : search<
                         Type,
                         typename drop<ctarray<Type, Ls...>, length / 2>::type,
-                        S>::value));
+                        Item>::value));
 };
 
-template <typename Type, Type I0, Type S>
-struct search<Type, ctarray<Type, I0>, S> {
+template <typename Type, Type I0, Type Item>
+struct search<Type, ctarray<Type, I0>, Item> {
   static constexpr unsigned long value = 0;
 };
 
-template <typename Type, Type S>
-struct search<Type, ctarray<Type>, S> {
+template <typename Type, Type Item>
+struct search<Type, ctarray<Type>, Item> {
   static constexpr unsigned long value = 0;
 };
 
-// Merge
+// Merge two arrays
 // ------------------------------------------------------------------------------------------------
 template <typename Type, typename Array1, typename Array2>
 struct merge;
@@ -225,7 +226,7 @@ struct merge<Type, ctarray<Type, I0>, ctarray<Type, J0>> {
                                   ctarray<Type, J0, I0>>;
 };
 
-// Sort
+// Sort Array
 // ------------------------------------------------------------------------------------------------
 template <typename Type, typename Array>
 struct sort;
@@ -257,7 +258,7 @@ struct sort<Type, ctarray<Type>> {
   using type = ctarray<Type>;
 };
 
-// Normalize
+// Normalize : Compute Item % Fact for each item in the array
 // ------------------------------------------------------------------------------------------------
 template <typename Type, typename Array, unsigned long Fact>
 struct normalize;
@@ -274,9 +275,8 @@ struct normalize<Type, ctarray<Type, I0>, Fact> {
   using type = ctarray<Type, I0 % Fact>;
 };
 
-// Doubles
+// Doubles : Checks if a sorted array has a double
 // ------------------------------------------------------------------------------------------------
-// Array needs to be sorted first
 template <typename Type, typename Array>
 struct doubles;
 
@@ -291,7 +291,7 @@ struct doubles<Type, ctarray<Type, I0, I1>> {
   static constexpr bool value = (I0 == I1 ? true : false);
 };
 
-// Concat
+// Concatenate two arrays
 // ------------------------------------------------------------------------------------------------
 template <typename Type, typename Array0, typename Array1>
 struct concat;
@@ -310,11 +310,11 @@ constexpr inline auto ctarray_get_v = Private::get<Array, Index>::value;
 template <typename Array1, typename Array2>
 constexpr inline bool ctarray_cmp_v = Private::compare<Array1, Array2>::value;
 
-template <typename Array, unsigned long Count>
-using ctarray_drop_t = Private::drop<Array, Count>::type;
+template <typename Array, unsigned long N>
+using ctarray_drop_t = Private::drop<Array, N>::type;
 
-template <typename Array, unsigned long Count>
-using ctarray_take_t = Private::take<Array, Count>::type;
+template <typename Array, unsigned long N>
+using ctarray_take_t = Private::take<Array, N>::type;
 
 template <typename Type, Type Item, typename Array>
 using ctarray_prepend_t = Private::prepend<Type, Item, Array>::type;
@@ -326,8 +326,8 @@ constexpr inline auto ctarray_search_v =
 template <typename Type, typename Array>
 using ctarray_sort_t = Private::sort<Type, Array>::type;
 
-template <typename Type, typename Array, unsigned long Count>
-using ctarray_fit_t = Private::fit<Type, Array, Count>::type;
+template <typename Type, typename Array, unsigned long N>
+using ctarray_fit_t = Private::fit<Type, Array, N>::type;
 
 template <typename Type, typename Array, unsigned long Fact>
 using ctarray_norm_t = Private::normalize<Type, Array, Fact>::type;

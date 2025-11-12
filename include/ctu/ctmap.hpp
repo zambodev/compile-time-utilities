@@ -58,6 +58,8 @@ struct pad<FirstType, SecondType, ctarray<ctpair<FirstType, SecondType>, I0>,
                              I0.first - Last - 1>;
 };
 
+// Map : Yup, looks like a map to me
+// ------------------------------------------------------------------------------------------------
 template <typename FirstType, typename SecondType, unsigned long Fact,
           bool Found, typename Array>
 struct map;
@@ -94,6 +96,7 @@ struct map<FirstType, SecondType, Fact, true, Array> {
 // ################################################################################################
 
 // ctmap
+// Humanly usable map wrapper
 // ------------------------------------------------------------------------------------------------
 template <typename FirstType, typename SecondType,
           ctpair<FirstType, SecondType>... Pairs>
