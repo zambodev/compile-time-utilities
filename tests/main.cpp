@@ -1,7 +1,8 @@
 #include <ctu/ctarray.hpp>
 #include <ctu/ctmap.hpp>
-#include <iostream>
 
+// Tests
+// ------------------------------------------------------------------------------------------------
 static_assert(
     ctu::ctarray_cmp_v<ctu::ctarray<int, 1, 2, 3>, ctu::ctarray<int, 1, 2, 3>>);
 static_assert(ctu::ctarray_get_v<ctu::ctarray<int, 1, 2, 3>, 2> == 3);
@@ -33,23 +34,4 @@ static_assert(ctu::ctarray_cmp_v<
               ctu::ctarray_sort_t<int, ctu::ctarray<int, 3, 5, 1, 2, 4>>,
               ctu::ctarray<int, 1, 2, 3, 4, 5>>);
 
-void func(void) { std::cout << "ok\n"; }
-void func2(void) { std::cout << "ok 2\n"; }
-
-int main(void) {
-  constexpr ctu::ctmap<ctu::ctstring<64>, int, {"ciao", 10}, {"helo", 9},
-                       {"hallo", 2}>
-      cmap;
-
-  cmap.print();
-  std::cout << "Value of 'hallo': " << cmap["hallo"] << "\n";
-
-  constexpr ctu::ctmap<int, void (*)(), {1324234213, func}, {3789987, func2},
-                       {213235689,
-                        [](void) -> void { std::cout << "lambda\n"; }}>
-      cmap2;
-
-  cmap2[1324234213]();
-  cmap2[3789987]();
-  cmap2[213235689]();
-}
+int main(void) {}

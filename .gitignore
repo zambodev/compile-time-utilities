@@ -7,3 +7,5 @@ Makefile
 CMakeCache.txt
 
 tests/tests_main
+examples/func_map
+examples/string_map

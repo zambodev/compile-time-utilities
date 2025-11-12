@@ -1,0 +1,6 @@
+file( GLOB SRCS *.cpp )
+foreach( testsourcefile ${SRCS} )
+    get_filename_component( testname ${testsourcefile} NAME_WE )
+    add_executable( ${testname} ${testsourcefile} )
+    target_link_libraries( ${testname} PRIVATE ctu )
+endforeach( testsourcefile ${SRCS} )
