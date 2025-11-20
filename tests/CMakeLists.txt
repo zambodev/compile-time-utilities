@@ -1,5 +1,6 @@
-# Create a test executable from main.cpp
-add_executable(tests_main main.cpp)
-
-# Link the header-only library
-target_link_libraries(tests_main PRIVATE ctu)
+file( GLOB SRCS *.cpp )
+foreach( testsourcefile ${SRCS} )
+    get_filename_component( testname ${testsourcefile} NAME_WE )
+    add_executable( ${testname} ${testsourcefile} )
+    target_link_libraries( ${testname} PRIVATE ctu )
+endforeach( testsourcefile ${SRCS} )

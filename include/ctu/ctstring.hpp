@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include <ctu/ctarray.hpp>
 
 namespace ctu {
@@ -8,11 +9,10 @@ namespace ctu {
 // ------------------------------------------------------------------------------------------------
 template <unsigned long Size>
 struct ctstring {
-  bool is_empty = true;
   unsigned int crc32 = {0};
   char c_str[Size] = {0};
 
-  constexpr ctstring() : crc32{0}, c_str{0}, is_empty{true} {};
+  constexpr ctstring() : crc32{0}, c_str{0} {};
   constexpr ctstring(const char* str) {
     unsigned long idx = 0;
     const char* p = str;
@@ -22,8 +22,6 @@ struct ctstring {
       ++idx;
       ++p;
     }
-
-    is_empty = false;
 
     this->crc32 = this->get_crc32();
   }
@@ -38,12 +36,26 @@ struct ctstring {
       ++p;
     }
 
-    is_empty = false;
-
     crc32 = crc;
   }
 
+  constexpr ctstring(const ctstring<Size>& str) {
+    memcpy(c_str, str.c_str, Size);
+    crc32 = str.crc32;
+  }
+
+  constexpr ctstring(ctstring<Size>&& str) {
+    memcpy(c_str, str.c_str, Size);
+    crc32 = str.crc32;
+  }
+
   constexpr ~ctstring() {}
+
+  constexpr ctstring& operator=(const ctstring<Size>& str) {
+    for (unsigned long i = 0; i < Size; ++i) c_str[i] = str.c_str[i];
+    crc32 = str.crc32;
+    return *this;
+  }
 
   template <unsigned long StrSize = Size>
   constexpr auto operator<=>(const ctstring<StrSize>& str) const {

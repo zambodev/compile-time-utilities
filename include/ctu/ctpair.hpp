@@ -19,9 +19,23 @@ struct ctpair {
     this->second = value;
   }
 
+  constexpr ctpair(ctpair&& pair) {
+    this->first = pair.first;
+    this->second = pair.second;
+  }
+
   constexpr ctpair(const ctpair& pair) {
     this->first = pair.first;
     this->second = pair.second;
+  }
+
+  constexpr ~ctpair() {}
+
+  constexpr ctpair& operator=(const ctpair& pair) {
+    this->first = pair.first;
+    this->second = pair.second;
+
+    return *this;
   }
 
   constexpr auto operator<=>(const ctpair& pair) const {
