@@ -10,9 +10,10 @@ namespace ctu {
 template <unsigned long Size>
 struct ctstring {
   unsigned int crc32 = {0};
+  unsigned int crc32_bak = {0};
   char c_str[Size] = {0};
 
-  constexpr ctstring() : crc32{0}, c_str{0} {};
+  constexpr ctstring() : crc32{0}, crc32_bak{0}, c_str{0} {};
   constexpr ctstring(const char* str) {
     unsigned long idx = 0;
     const char* p = str;
@@ -23,7 +24,7 @@ struct ctstring {
       ++p;
     }
 
-    this->crc32 = this->get_crc32();
+    this->crc32_bak = this->crc32 = this->get_crc32();
   }
 
   constexpr ctstring(const char* str, unsigned int crc) {
@@ -36,24 +37,30 @@ struct ctstring {
       ++p;
     }
 
-    crc32 = crc;
+    this->crc32 = crc;
+    this->crc32_bak = this->get_crc32();
   }
 
   constexpr ctstring(const ctstring<Size>& str) {
-    memcpy(c_str, str.c_str, Size);
-    crc32 = str.crc32;
+    for (unsigned long i = 0; i < Size; ++i)
+      c_str[i] = str.c_str[i];
+    this->crc32 = str.crc32;
+    this->crc32_bak = str.crc32_bak;
   }
 
-  constexpr ctstring(ctstring<Size>&& str) {
-    memcpy(c_str, str.c_str, Size);
-    crc32 = str.crc32;
+  constexpr ctstring(ctstring<Size>&& str) noexcept {
+    for (unsigned long i = 0; i < Size; ++i)
+      c_str[i] = str.c_str[i];
+    this->crc32 = str.crc32;
+    this->crc32_bak = str.crc32_bak;
   }
 
   constexpr ~ctstring() {}
 
   constexpr ctstring& operator=(const ctstring<Size>& str) {
     for (unsigned long i = 0; i < Size; ++i) c_str[i] = str.c_str[i];
-    crc32 = str.crc32;
+    this->crc32 = str.crc32;
+    this->crc32_bak = str.crc32_bak;
     return *this;
   }
 

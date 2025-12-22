@@ -10,9 +10,13 @@ int main(void) {
              {213235689, [](void) -> void { std::cout << "lambda\n"; }}>
       cmap;
 
-  cmap[1324234213]();
-  cmap[3789987]();
-  cmap[213235689]();
+  
+  if (auto exp = cmap[1324234213]; exp.has_value())
+    exp.value()();
+  if (auto exp = cmap[3789987]; exp.has_value())
+    exp.value()();
+  if (auto exp = cmap[213235689]; exp.has_value())
+    exp.value()();
 }
 
 /* Output:

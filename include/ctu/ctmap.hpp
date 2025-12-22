@@ -3,12 +3,11 @@
 #include <ctu/ctarray.hpp>
 #include <ctu/ctpair.hpp>
 #include <ctu/ctstring.hpp>
-#include <stdexcept>
+#include <expected>
 #include <type_traits>
 #include <utility>
-#ifdef CTU_DEBUG
-#include <iostream>
-#endif
+#include <string>
+#include <array>
 
 namespace ctu {
 
@@ -23,8 +22,8 @@ template <typename FirstType, typename SecondType,
           ctpair<FirstType, SecondType>... Ps>
 struct map_to_stdarray<FirstType, SecondType,
                        ctarray<ctpair<FirstType, SecondType>, Ps...>> {
-  static constexpr std::array<SecondType, sizeof...(Ps)> value = {
-      {{Ps.second}...}};
+  static constexpr std::array<std::pair<FirstType, SecondType>, sizeof...(Ps)> value = {
+      {{std::pair{Ps.first, Ps.second}}...}};
 };
 
 // Pad
@@ -105,29 +104,28 @@ class ctmap {
   constexpr ctmap() = default;
   constexpr ~ctmap() = default;
 
-  SecondType operator[](const ctstring<64>& key) const {
+  auto operator[](const ctstring<64>& key) const -> std::expected<SecondType, std::string> {
     unsigned int idx = (key % cmap_v).crc32;
 
-    if (idx >= arr.size()) throw std::runtime_error("Key not found");
+    if (idx >= arr.size())
+      return std::unexpected{"Key not found!"};
 
-    return arr[idx];
+    if (key.crc32 != arr[idx].first.crc32_bak)
+      return std::unexpected{"Key not found!"};
+
+
+    return arr[idx].second;
   }
 
   template <std::integral T>
-  SecondType operator[](const T& key) const {
+  auto operator[](const T& key) const -> std::expected<SecondType, std::string> {
     unsigned int idx = key % cmap_v;
 
-    if (idx >= arr.size()) throw std::runtime_error("Key not found");
+    if (idx >= arr.size())
+      return std::unexpected{"Key not found!"};
 
-    return arr[idx];
+    return arr[idx].second;
   }
-
-#ifdef CTU_DEBUG
-  void print(void) const {
-    for (unsigned long i = 0; i < arr.size(); ++i)
-      std::cout << "[" << i << "] = " << arr[i] << "\n";
-  }
-#endif
 
  private:
   using cmap = Private::map<FirstType, SecondType, sizeof...(Pairs), false,
@@ -135,7 +133,7 @@ class ctmap {
   using cmap_t = typename cmap::type;
   static constexpr unsigned long cmap_v = cmap::value;
 
-  using stdarray = std::array<SecondType, cmap_t::arr.size()>;
+  using stdarray = std::array<std::pair<FirstType, SecondType>, cmap_t::arr.size()>;
   static constexpr stdarray arr =
       ctu::Private::map_to_stdarray<FirstType, SecondType, cmap_t>::value;
 };

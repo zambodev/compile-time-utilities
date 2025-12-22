@@ -7,8 +7,8 @@ int main(void) {
                        {"hello", 2}>
       cmap;
 
-  cmap.print();
-  std::cout << "Value of 'hello': " << cmap["hello"] << "\n";
+  if (auto exp = cmap[1324234213]; exp.has_value())
+    std::cout << "Value of 'hello': " << cmap["hello"].value() << "\n";
 }
 
 /* Output:

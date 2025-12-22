@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5...4.0)
 
 project(ctu LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 add_library(ctu INTERFACE)
 target_include_directories(ctu INTERFACE include/)
